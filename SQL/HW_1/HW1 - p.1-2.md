@@ -1,0 +1,106 @@
+# Пункт 1
+***Задача:***
+- **(2 балла)** Продумать структуру базы данных и [отрисовать в редакторе](https://dbdiagram.io/home?utm_source=holistics&utm_medium=top_5_tools_blog).
+
+***Решение:***
+![Картиночка №1]()
+\* Визуализация представлена уже с учётом п.2
+___
+# Пункт 2
+***Задача:***
+- **(2 балла)** Нормализовать базу данных (1НФ — 3НФ), описав, к какой нормальной форме приводится таблица и почему таблица в этой нормальной форме изначально не находилась.
+
+***Решение:***
+1) Представленная база данных уже находится в 1НФ, т.к. обе таблицы соответствуют критериям 1НФ:
+	- Каждая ячейка содержит атомарные значения
+	- Нет повторяющихся групп или массивов в столбцах
+2) Для перехода к 2НФ обе таблицы должны быть приведены к 1НФ (уже сделано), а также каждый не ключевой столбец должен зависеть от первичного ключа.
+   Для таблицы `customer` эти условия выполнены, а вот в таблице `transaction` ряд столбцов (`brand`, `product_line`, `product_class`, `product_size`, `list_price`, `standard_cost`) зависят не от первичного ключа (`transaction_id`), а от столбца `product_id`. Это означает, что эти столбцы необходимо вынести в отдельную таблицу и связать её с `transaction` по столбцу `product_id`.
+3) На данном этапе обе таблица приведены к 3НФ, а именно:
+	- Таблицы приведены к 2НФ
+	- В таблицах нет транзитивных зависимостей
+
+Результат нормализации БД приведён в скрине к [пункту 1](#пункт-1) настоящего задания.
+
+Конечно, можно дробить их ещё больше, например, адрес покупателя закинуть в отдельную таблицу, но нынешний вид уже соответствует 3НФ.
+___
+# Пункт 3
+***Задача:***
+- **(3 балла)** Создать все таблицы в DBeaver, указав первичные ключи к таблицам, правильные типы данных, могут ли поля быть пустыми или нет (использовать команду CREATE TABLE).
+
+***Решение:***
+
+> [!note] Нижеописанные скрипты также находятся в приложенном [файле (Scripts.sql)](/Scripts.sql)
+
+```
+create database hw_1_customers_and_transactions;
+
+create table product(
+	 product_id int primary key not null
+	,brand varchar(20)
+	,product_line varchar(20)
+	,product_class varchar(20)
+	,product_size varchar(20)
+	,list_price decimal(10, 2)
+	,standard_cost decimal(10, 2)
+);
+
+create table customer(
+	 customer_id int primary key not null
+	,first_name varchar(20)
+	,last_name varchar(20)
+	,gender varchar(20)
+	,DOB date
+	,job_title varchar(50)
+	,job_industry_category varchar(50)
+	,wealth_segment varchar(20)
+	,deceased_indicator bool
+	,owns_car bool
+	,address varchar(50)
+	,postcode int
+	,state varchar(20)
+	,country varchar(20)
+	,property_valuation int
+);
+
+  
+
+create table transaction(
+	 transaction_id int primary key not null
+	,product_id int not null
+	,customer_id int not null
+	,transaction_date date
+	,online_order bool
+	,order_status varchar(20)
+	,foreign key (product_id) references product(product_id)
+	,foreign key (customer_id) references customer(customer_id)
+);
+```
+___
+# Пункт 4
+***Задание:***
+- **(3 балла)** Загрузить данные в таблицы в соответствии с созданной структурой (использовать команду INSERT INTO или загрузить файлы, используя возможности инструмента DBeaver; в случае загрузки файлами приложить скрины, что данные действительно были залиты).
+
+***Решение:***
+>Чтобы не пилить костыли, в `customer` данные импортируем через скрипт, чтобы столбцы с типом данных `bool` заполнились сами.
+
+```
+copy customer(customer_id,first_name,last_name,gender,DOB,job_title,job_industry_category,wealth_segment,deceased_indicator,owns_car,address,postcode,state,country,property_valuation)
+from 'C:\Main\Stud\MIPT\SQL\sets\cust_1-10.csv'
+with (format csv, header true, delimiter ';')
+```
+
+>Столбец `deceased_indicator` всё равно загрузится некорректно, потому что значения там не *Yes/No* или *True/False*
+
+>Для этого столбца можно было бы загрузить через временную таблицу или загрузить текстом в нужную таблицу, а потом с помощью case when проставить `bool`
+
+Данные были загружены частично, потому что данные нужно ещё дополнительно обработать (например, у каждого `product_id` есть несколько разных товаров). По условию задания это не требовалось, поэтому было решено воспользоваться допущением загрузить только часть данных.
+
+## ***Скрины загрузки данных***
+*product*
+![[Pasted image 20250215042905.png]]
+*transaction*
+![[Pasted image 20250215042917.png]]
+*customer*
+![[Pasted image 20250215043140.png]]
+![[Pasted image 20250215043200.png]]
